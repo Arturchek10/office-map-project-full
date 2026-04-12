@@ -1,0 +1,14 @@
+[Unit]
+Description=map-service-front
+After=network.target
+
+[Service]
+ExecStart=/home/team_user/map-service/map-service 
+Restart=on-failure
+WorkingDirectory=/home/team_user/map-service
+Environment=PORT=8080
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

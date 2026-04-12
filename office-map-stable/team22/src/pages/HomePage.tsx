@@ -1,0 +1,161 @@
+import { YMaps } from "@pbe/react-yandex-maps"
+import CssBaseline from "@mui/material/CssBaseline"
+import MapOffice from "@features/Map/Map"
+import NavBar from "@entities/NavBar/NavBar"
+import OfficesBar from "@features/OfficesBar/OfficesBar"
+import {
+  Box,
+  CircularProgress,
+  Snackbar,
+  Alert,
+  Typography,
+} from "@mui/material"
+import { useEffect, useState } from "react"
+import { useUnit } from "effector-react"
+import {
+  $offices,
+  $officesError,
+  $officesLoading,
+  fetchOfficesFx,
+} from "@shared/api/Offices/GetOfficesList"
+import Header from "@entities/Header/Header"
+import NewOfficesBar from "@features/addundNewOffices/NewOfficesBar"
+import { addOfficeFx } from "@shared/api/Offices/AddOffice"
+
+
+function HomePage() {
+  const [isOfficesBarOpen, setIsOfficesBarOpen] = useState(false)
+  const [isNewOfficeBarOpen, setIsNewOfficeBarOpen] = useState(false)
+  const [activeOfficeId, setActiveOfficeId] = useState<number | null>(null)
+
+  const [offices, loading, error] = useUnit([
+    $offices,
+    $officesLoading,
+    $officesError,
+  ])
+
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean
+    message: string
+    severity: "success" | "error" | "info" | "warning"
+  }>({
+    open: false,
+    message: "",
+    severity: "info",
+  })
+
+  useEffect(() => {
+    fetchOfficesFx()
+  }, [])
+
+  const toggleOfficesBar = () => setIsOfficesBarOpen((prev) => !prev)
+
+  const handleSetActiveOfficeId = (id: number | null) => {
+    setActiveOfficeId(id)
+    if (!isOfficesBarOpen && id !== null) {
+      setIsOfficesBarOpen(true)
+    }
+  }
+
+  const handleAddOffice = (formData: FormData) => {
+    addOfficeFx(formData)
+      .then(() => {
+        setSnackbar({
+          open: true,
+          message: "✅ Офис успешно сохранён!",
+          severity: "success",
+        })
+      })
+      .catch((e) => {
+        setSnackbar({
+          open: true,
+          message: e.message || "❌ Ошибка при сохранении офиса",
+          severity: "error",
+        })
+      })
+  }
+
+  if (error) {
+    return (
+      <Box
+        sx={{
+          height: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          p: 2,
+        }}
+      >
+        <Typography variant="h3" align="center" color="error">
+          Ошибка загрузки офисов: {error?.message || "Неизвестная ошибка"}
+        </Typography>
+      </Box>
+    )
+  }
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <CircularProgress size={80} />
+      </Box>
+    )
+  }
+
+  return (
+    <>
+      <Header officeName = ''/>
+      <Box sx={{ display: "flex", height: "100vh" }}>
+        <CssBaseline />
+        <NavBar onToggleOffices={toggleOfficesBar} />
+
+        <MapOffice
+          offices={offices}
+          activeOfficeId={activeOfficeId}
+          setActiveOfficeId={handleSetActiveOfficeId}
+        />
+        <OfficesBar
+          offices={offices}
+          open={isOfficesBarOpen}
+          activeOfficeId={activeOfficeId}
+        />
+        <YMaps
+          query={{
+            apikey: "1aba321e-4a90-4692-8d6e-7a20d8e6c5f8",
+            load: "geocode",
+          }}
+        >
+          <NewOfficesBar
+            open={isNewOfficeBarOpen}
+            setOpen={setIsNewOfficeBarOpen}
+            onAddOffice={handleAddOffice}
+          />
+        </YMaps>
+      </Box>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+          variant="filled"
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </>
+  )
+}
+
+export default HomePage

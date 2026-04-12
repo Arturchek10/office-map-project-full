@@ -1,0 +1,13 @@
+.icon{
+  cursor: pointer;
+  opacity: 0.85;
+  transition: .2s;
+}
+.icon:hover{
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.iconT1  {
+  width: 70px;
+}

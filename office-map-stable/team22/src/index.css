@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "ALS Hauss Regular";
+  src: url("../src/assets/fonts/ALSHauss-Regular.ttf");
+}
+
+body,
+html {
+  overflow-y: hidden;
+  font-family: "ALS Hauss Regular", sans-serif;
+  height: 100%;
+}

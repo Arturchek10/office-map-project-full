@@ -1,0 +1,43 @@
+import Card from "@mui/material/Card"
+import CardContent from "@mui/material/CardContent"
+import CardMedia from "@mui/material/CardMedia"
+import Typography from "@mui/material/Typography"
+import CardActionArea from "@mui/material/CardActionArea"
+import type { TOffice } from "../type/office"
+
+interface OfficeProps extends TOffice {
+  active?: boolean
+}
+
+function Office({
+  photoUrl,
+  name,
+  city,
+  address,
+  active = false,
+}: OfficeProps) {
+  return (
+    <Card
+      sx={{
+        maxWidth: 250,
+        bgcolor: active ? "rgba(47, 128, 237, 0.3) !important" : "white",
+        transition: "background-color 0.3s ease, border-color 0.3s ease",
+      }}
+      elevation={active ? 8 : 1}
+    >
+      <CardActionArea>
+        <CardMedia component="img" height="140" image={photoUrl} alt={name} />
+        <CardContent>
+          <Typography gutterBottom variant="h5" component="div">
+            {name}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {city}, {address}
+          </Typography>
+        </CardContent>
+      </CardActionArea>
+    </Card>
+  )
+}
+
+export default Office

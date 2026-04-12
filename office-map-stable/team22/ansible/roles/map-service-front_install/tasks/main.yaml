@@ -1,0 +1,34 @@
+- name: Ensure Docker is installed
+  become: true
+  apt:
+    name: docker.io
+    state: present
+    update_cache: yes
+
+- name: Install Docker Compose
+  become: true
+  apt:
+    name: docker-compose
+    state: present
+
+- name: Ensure target directory exists
+  file:
+    path: /home/team_user/map-service-front
+    state: directory
+    mode: '0755'
+
+- name: Copy docker-compose.front.yaml
+  copy:
+    src: "{{ playbook_dir }}/../../docker-compose.front.yaml"
+    dest: /home/team_user/map-service-front/docker-compose.front.yaml
+
+- name: Stop and remove existing containers
+  become: true
+  community.docker.docker_container:
+    name: map-service-front
+    state: absent
+
+- name: Deploy with Docker Compose
+  shell: docker-compose -f docker-compose.front.yaml pull && docker-compose -f docker-compose.front.yaml up -d
+  args:
+    chdir: /home/team_user/map-service-front

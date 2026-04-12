@@ -1,0 +1,6 @@
+- name: Deploy map-service-front
+  hosts: map-service
+  roles:
+    - name: map-service-front_install
+      role: ../../roles/map-service-front_install
+  
