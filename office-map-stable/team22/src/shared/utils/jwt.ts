@@ -1,3 +1,16 @@
+// На стороне клиента реализована декодировка JWT-токена для извлечения 
+// пользовательских данных и проверки срока его действия без необходимости 
+// дополнительных запросов к серверу.
+
+
+// утилита для работы с JSON Web Token
+// - декодирует токен
+// - проверяет, истёк ли он
+// - достаёт данные пользователя
+// пример jwt xxxxx.yyyyy.zzzzz - header.payload.signature
+
+import { UserInfo } from "@shared/types/user.types"
+
 interface JwtPayload {
   sub: string
   email?: string
@@ -32,6 +45,7 @@ export const decodeJwt = (token: string): JwtPayload | null => {
   }
 }
 
+// проверка:  токен истек или нет
 export const isTokenExpired = (token: string): boolean => {
   const payload = decodeJwt(token)
   if (!payload) return true
@@ -40,7 +54,8 @@ export const isTokenExpired = (token: string): boolean => {
   return payload.exp < currentTime
 }
 
-export const getUserInfo = (token: string) => {
+// получение информации о пользователе через токен 
+export const getUserInfo = (token: string): UserInfo | null => {
   const payload = decodeJwt(token)
   if (!payload) return null
 

@@ -2,25 +2,36 @@ import { createStore, createEvent, createEffect, sample } from "effector"
 import { useUnit } from "effector-react"
 import { signIn } from "@shared/api/Auth/SignIn"
 import { refreshToken } from "@shared/api/Auth/RefreshToken"
-import { decodeJwt, isTokenExpired, getUserInfo } from "@shared/utils/jwt"
+import { isTokenExpired, getUserInfo } from "@shared/utils/jwt"
+import { UserInfo } from "@shared/types/user.types"
 
-interface User {
-  id: string
-  email?: string
-  name?: string
-  role?: string
-}
 
+// полное состояние авторизации.
+// в store хранится:
+  // access token
+  // refresh token
+  // пользователь
+  // авторизован ли пользователь
+  // идёт ли загрузка
+  // есть ли ошибка
 interface AuthState {
   token: string | null
   refreshToken: string | null
-  user: User | null
+  user: UserInfo | null
   isAuthenticated: boolean
   isLoading: boolean
   error: string | null
 }
 
 // Events
+// event в Effector - это просто сигнал: "произошло действие"
+// loginRequested - пользователь нажал вход
+// logoutRequested - пользователь вышел
+// setTokensRequested - надо установить токены
+// refreshTokensRequested - обновили токены
+// clearErrorRequested - очистить ошибку
+
+//  event сам ничего не делает, а только запускает дальнейшую логику.
 export const loginRequested = createEvent<{ login: string; password: string }>()
 export const logoutRequested = createEvent()
 export const setTokensRequested = createEvent<{
@@ -35,9 +46,10 @@ export const refreshTokensOnInitRequested = createEvent<string>()
 export const clearErrorRequested = createEvent()
 
 // Effects
+
 export const loginFx = createEffect<
   { login: string; password: string },
-  { token: string; refreshToken: string; user: User }
+  { token: string; refreshToken: string; user: UserInfo }
 >(async (credentials) => {
   try {
     const response = await signIn(credentials)
@@ -61,7 +73,7 @@ export const loginFx = createEffect<
 // Effect для автоматического обновления токенов при инициализации
 export const refreshTokensOnInitFx = createEffect<
   string,
-  { token: string; refreshToken: string; user: User }
+  { token: string; refreshToken: string; user: UserInfo }
 >(async (refreshTokenValue) => {
   try {
     const response = await refreshToken(refreshTokenValue)
@@ -100,16 +112,24 @@ export const $isLoading = $auth.map((state) => state.isLoading)
 export const $error = $auth.map((state) => state.error)
 
 // Logic
+
+// Когда вызывается loginRequested, запускается loginFx.
 sample({
   clock: loginRequested,
   target: loginFx,
 })
-
+// Когда надо обновить токен при запуске - запускается refresh effect.
 sample({
   clock: refreshTokensOnInitRequested,
   target: refreshTokensOnInitFx,
 })
 
+// Когда effect в процессе, store обновляется:
+
+// isLoading: true
+// error: null
+
+// UI может показать спиннер.
 sample({
   clock: refreshTokensOnInitFx.pending,
   source: $auth,
@@ -120,6 +140,7 @@ sample({
   }),
   target: $auth,
 })
+
 
 sample({
   clock: loginFx.pending,
@@ -132,6 +153,11 @@ sample({
   target: $auth,
 })
 
+// Если логин успешен:
+
+// токены кладутся в store
+// пользователь кладётся в store
+// isAuthenticated = true
 sample({
   clock: loginFx.doneData,
   fn: (data) => ({
@@ -158,6 +184,10 @@ sample({
   target: $auth,
 })
 
+// Если логин не удался:
+
+// загрузка выключается
+// ошибка записывается
 sample({
   clock: loginFx.failData,
   source: $auth,
@@ -180,6 +210,7 @@ sample({
   target: $auth,
 })
 
+// Полная очистка auth state.
 sample({
   clock: logoutRequested,
   fn: () => ({
@@ -193,6 +224,13 @@ sample({
   target: $auth,
 })
 
+// Оба события делают почти одно и то же:
+
+// записывают токены
+// декодируют пользователя из access token
+// включают isAuthenticated
+
+// То есть это ручная установка состояния авторизации
 sample({
   clock: setTokensRequested,
   fn: ({ token, refreshToken }) => {
@@ -236,6 +274,16 @@ sample({
 })
 
 // LocalStorage persistence
+
+// следит за store.
+
+// Если пользователь авторизован:
+//   токены и user сохраняются в localStorage
+
+// Если нет:
+//   всё удаляется
+
+// То есть после перезагрузки страницы сессия не пропадает.
 $auth.watch((state) => {
   if (state.token && state.refreshToken && state.user) {
     localStorage.setItem("auth-token", state.token)
@@ -249,6 +297,8 @@ $auth.watch((state) => {
 })
 
 // Initialize from localStorage
+
+// логика восстановления сессии
 const initializeFromStorage = () => {
   const savedToken = localStorage.getItem("auth-token")
   const savedRefreshToken = localStorage.getItem("auth-refresh-token")
@@ -257,7 +307,6 @@ const initializeFromStorage = () => {
   if (savedToken && savedRefreshToken && savedUser) {
     // Проверяем, что access token не истек
     if (!isTokenExpired(savedToken)) {
-      const user = JSON.parse(savedUser)
       setTokensRequested({ token: savedToken, refreshToken: savedRefreshToken })
     } else {
       // Если access token истек, но есть refresh token,

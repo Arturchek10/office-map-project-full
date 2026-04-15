@@ -1,3 +1,5 @@
+// безопасный парсер ответа (Response) в JSON.
+// пытается сделать: response.json() но без риска упасть с ошибкой
 
 export const fetchJsonSafe = async (
   response: Response

@@ -8,25 +8,25 @@ export default defineConfig({
   plugins: [react(), svgr(), tailwindcss()],
   server: {
     proxy: {
-      // всё что идёт на /api/v1/auth → отправляем на 8082
+      // всё что идёт на /api/v1/auth → отправляем на 8080 так как бэк поднят там
       "/api/v1/auth": {
-        target: "http://10.10.146.211:8082",
+        target: "http://localhost:8080",
         changeOrigin: true,
       },
 
       "/api/v1/admin": {
-        target: "http://10.10.146.211:8082",
+        target: "http://localhost:8080",
         changeOrigin: true,
       },
 
       "/api/v1/register": {
-        target: "http://10.10.146.211:8082",
+        target: "http://localhost:8080",
         changeOrigin: true,
       },
 
       // остальные /api → на 8080
       "/api": {
-        target: "http://10.10.146.211:8080",
+        target: "http://localhost:8080",
         changeOrigin: true,
       },
     },

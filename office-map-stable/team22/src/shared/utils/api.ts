@@ -1,149 +1,187 @@
+// обёртка над fetch, которая:
+
+// - автоматически подставляет токен (Authorization)
+// - обрабатывает ошибки
+// - делает refresh токена при 401
+// - повторяет запрос после обновления токена
+// - даёт удобные методы (apiGet, apiPost и т.д.)
+
+//  это единый HTTP-клиент для всего проекта
+
 import {
   $auth,
   logoutRequested,
   refreshTokensRequested,
-} from "@shared/store/auth"
-import { refreshToken } from "@shared/api/Auth/RefreshToken"
+} from "@shared/store/auth";
+import { refreshToken } from "@shared/api/Auth/RefreshToken";
 
-let isRefreshing = false
+let isRefreshing = false;
+// Очередь запросов
+// Если несколько запросов одновременно получили 401:
+
+// только один делает refresh
+// остальные ждут в очереди
+// потом все продолжаются
 let failedQueue: Array<{
-  resolve: (value: Response) => void
-  reject: (error: Error) => void
-}> = []
+  resolve: (token: string) => void;
+  reject: (error: Error) => void;
+}> = [];
 
 const processQueue = (error: Error | null, token: string | null = null) => {
   failedQueue.forEach(({ resolve, reject }) => {
     if (error) {
-      reject(error)
-    } else {
-      resolve(new Response())
+      reject(error);
+    } else if (token) {
+      resolve(token);
     }
-  })
-  failedQueue = []
-}
+  });
+  failedQueue = [];
+};
 
+// Все запросы идут через эту функцию
 export const createApiRequest = async (
   url: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ): Promise<Response> => {
-  const authState = $auth.getState()
-  const token = authState.token
+  // Подстановка токена
+  const authState = $auth.getState();
+  const token = authState.token;
 
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string>),
-  }
+  };
 
   if (!(options.body instanceof FormData)) {
-    headers["Content-Type"] = "application/json"
+    headers["Content-Type"] = "application/json";
   }
 
   if (token) {
-    headers["Authorization"] = `Bearer ${token}`
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const fetchWithCheck = async (): Promise<Response> => {
-    const res = await fetch(url, { ...options, headers })
+  // Универсальный fetch. Любая ошибка попадает в exception и выводится.
+  const fetchWithCheck = async (
+    customHeaders: Record<string,string>,
+  ): Promise<Response> => {
+    const res = await fetch(url, { ...options, headers: customHeaders });
     if (!res.ok) {
-      const text = await res.text().catch(() => "")
-      throw new Error(`HTTP ${res.status}: ${text}`)
+      const text = await res.text().catch(() => "");
+      throw new Error(`HTTP ${res.status}: ${text}`);
     }
-    return res
-  }
+    return res;
+  };
 
   try {
-    return await fetchWithCheck()
+    return await fetchWithCheck(headers);
   } catch (err: any) {
-    // Если 401 и есть refreshToken
+    // Обработка 401
+      // Если 401 и есть refreshToken
+      // Если токен истёк:
+      // Проверяет "Token expired"
+      // Запускает refresh токена
+      // Обновляет store
+      // Повторяет запрос
     if (err.message.includes("HTTP 401") && authState.refreshToken) {
       const errorData = await fetch(url, { ...options, headers }).then((r) =>
-        r.json().catch(() => ({}))
-      )
+        r.json().catch(() => ({})),
+      );
 
+
+      // 
       if (errorData.message === "Token expired") {
         if (isRefreshing) {
-          return new Promise((resolve, reject) => {
-            failedQueue.push({ resolve, reject })
-          })
+          return new Promise<string>((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+          }).then((newToken) => {
+            const newHeaders = {
+              ...headers,
+              Authorization: `Bearer ${newToken}`,
+            };
+            return fetchWithCheck(newHeaders)
+          });
         }
 
-        isRefreshing = true
+        isRefreshing = true;
         try {
-          const newTokens = await refreshToken(authState.refreshToken)
+          const newTokens = await refreshToken(authState.refreshToken);
           refreshTokensRequested({
             token: newTokens.token,
             refreshToken: newTokens.refreshToken,
-          })
+          });
 
-          headers["Authorization"] = `Bearer ${newTokens.token}`
-          if (!(options.body instanceof FormData)) {
-            headers["Content-Type"] = "application/json"
+          const newHeaders = {
+            ...headers,
+            Authorization: `Bearer ${newTokens.token}`
           }
 
-          const retryResponse = await fetchWithCheck()
-          processQueue(null, newTokens.token)
-          isRefreshing = false
-          return retryResponse
+          const retryResponse = await fetchWithCheck(newHeaders);
+          processQueue(null, newTokens.token);
+          isRefreshing = false;
+          return retryResponse;
         } catch (refreshError) {
-          processQueue(refreshError as Error)
-          isRefreshing = false
-          logoutRequested()
-          throw new Error("Token refresh failed")
+          processQueue(refreshError as Error);
+          isRefreshing = false;
+          // Если refresh не удался пользователь разлогинивается
+          logoutRequested();
+          throw new Error("Token refresh failed");
         }
       }
     }
 
-    throw err
+    throw err;
   }
-}
+};
 
 // --- вспомогательные функции ---
+// Чтобы не писать каждый раз:
+// fetch(url, { method: "POST", body: ... }) а можно сразу apiPost("/users", data)
 export const apiGet = (url: string, options?: RequestInit) =>
-  createApiRequest(url, { ...options, method: "GET" })
+  createApiRequest(url, { ...options, method: "GET" });
 
 export const apiPost = (url: string, data?: any, options?: RequestInit) =>
   createApiRequest(url, {
     ...options,
     method: "POST",
     body: data ? JSON.stringify(data) : undefined,
-  })
+  });
 
 export const apiPut = (url: string, data?: any, options?: RequestInit) =>
   createApiRequest(url, {
     ...options,
     method: "PUT",
     body: data ? JSON.stringify(data) : undefined,
-  })
+  });
 
 export const apiPatch = (url: string, data?: any, options?: RequestInit) =>
   createApiRequest(url, {
     ...options,
     method: "PATCH",
     body: data ? JSON.stringify(data) : undefined,
-  })
+  });
 
 export const apiPatchFormData = (
   url: string,
   formData: FormData,
-  options?: RequestInit
+  options?: RequestInit,
 ) =>
   createApiRequest(url, {
     ...options,
     method: "PATCH",
     body: formData,
     headers: { ...options?.headers },
-  })
+  });
 
 export const apiDelete = (url: string, options?: RequestInit) =>
-  createApiRequest(url, { ...options, method: "DELETE" })
+  createApiRequest(url, { ...options, method: "DELETE" });
 
 export const apiPostFormData = (
   url: string,
   formData: FormData,
-  options?: RequestInit
+  options?: RequestInit,
 ) =>
   createApiRequest(url, {
     ...options,
     method: "POST",
     body: formData,
     headers: { ...options?.headers },
-  })
+  });
