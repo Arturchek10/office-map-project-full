@@ -3,8 +3,12 @@ package com.t1.map_service.service.auth;
 import com.t1.map_service.dto.auth.AuthResponse;
 import com.t1.map_service.dto.auth.SignInRequest;
 import com.t1.map_service.security.service.jwt.JwtService;
+import com.t1.map_service.repository.UserRepository;
+import com.t1.map_service.model.entity.User;
+
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -12,21 +16,26 @@ import org.springframework.stereotype.Service;
 public class AuthService {
 
     private final JwtService jwtService;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthResponse signIn(SignInRequest request) {
-        // Временная авторизация для запуска проекта
-        if (!"test".equals(request.login()) || !"test".equals(request.password())) {
+        User user = userRepository.findByEmail(request.email())
+            .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+
+        boolean passwordMatches = passwordEncoder.matches(request.password(), user.getPassword());
+
+        if (!passwordMatches){
             throw new RuntimeException("Неверный логин или пароль");
         }
 
-        String userId = "1";
-        String email = "test@example.com";
-        String name = "Test User";
-        String role = "USER";
-
-        String accessToken = jwtService.generateAccessToken(userId, email, name, role);
-        String refreshToken = jwtService.generateRefreshToken(userId);
-
+        String accessToken = jwtService.generateAccessToken(
+                user.getId().toString(),
+                user.getEmail(),
+                user.getName(),
+                user.getRole()
+        );
+        String refreshToken = jwtService.generateRefreshToken(user.getId().toString());
         return new AuthResponse(accessToken, refreshToken);
     }
 
@@ -38,14 +47,16 @@ public class AuthService {
         Claims claims = jwtService.extractAllClaims(refreshToken);
         String userId = claims.getSubject();
 
-        // Пока восстанавливаем данные пользователя вручную
-        // Позже это можно брать из БД
-        String email = "test@example.com";
-        String name = "Test User";
-        String role = "USER";
+        User user = userRepository.findById(Long.valueOf(userId))
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        String newAccessToken = jwtService.generateAccessToken(userId, email, name, role);
-        String newRefreshToken = jwtService.generateRefreshToken(userId);
+        String newAccessToken = jwtService.generateAccessToken(
+                user.getId().toString(),
+                user.getEmail(),
+                user.getName(),
+                user.getRole()
+        );
+        String newRefreshToken = jwtService.generateRefreshToken(user.getId().toString());
 
         return new AuthResponse(newAccessToken, newRefreshToken);
     }
