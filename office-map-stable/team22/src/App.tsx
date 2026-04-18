@@ -6,8 +6,17 @@ import AuthPage from "@pages/AuthPage"
 import RegisterPage from "@pages/RegisterPage"
 import AdminPanelPage from "@pages/AdminPanelPage"
 import { ProtectedRoute } from "@shared/components/ProtectedRoute"
+import { initAuth } from "@shared/store/auth"
+import { useEffect } from "react"
+import { useUnit } from "effector-react"
 
 function App() {
+  const startAuth = useUnit(initAuth)
+
+  useEffect(() => {
+    startAuth() // вызов эффекта при монтировании компонента
+  }, [])
+
   return (
     <BrowserRouter>
       <Routes>

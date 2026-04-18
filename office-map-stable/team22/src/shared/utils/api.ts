@@ -11,7 +11,7 @@
 import {
   $auth,
   logoutRequested,
-  refreshTokensRequested,
+  // refreshTokensRequested,
 } from "@shared/store/auth";
 import { refreshToken } from "@shared/api/Auth/RefreshToken";
 
@@ -104,10 +104,10 @@ export const createApiRequest = async (
         isRefreshing = true;
         try {
           const newTokens = await refreshToken(authState.refreshToken);
-          refreshTokensRequested({
-            token: newTokens.token,
-            refreshToken: newTokens.refreshToken,
-          });
+          // refreshTokensRequested({
+          //   token: newTokens.token,
+          //   refreshToken: newTokens.refreshToken,
+          // });
 
           const newHeaders = {
             ...headers,

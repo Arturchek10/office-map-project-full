@@ -3,6 +3,7 @@ package com.t1.map_service.controller.auth;
 import com.t1.map_service.dto.auth.AuthResponse;
 import com.t1.map_service.dto.auth.SignInRequest;
 import com.t1.map_service.dto.auth.RefreshTokenRequest;
+import com.t1.map_service.dto.auth.SignUpRequest;
 import com.t1.map_service.service.auth.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +15,11 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+
+    @PostMapping("/register")
+    public AuthResponse signUp(@RequestBody SignUpRequest request) {
+        return authService.signUp(request);
+    }
 
     @PostMapping("/sign-in")
     public AuthResponse signIn(@RequestBody SignInRequest request) {

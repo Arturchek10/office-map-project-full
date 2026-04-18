@@ -1,24 +1,26 @@
+import { ErrorResponse } from "react-router-dom";
+
 interface SignInRequest {
-  login: string
-  password: string
+  email: string;
+  password: string;
 }
 
 interface SignInResponse {
-  token: string
-  refreshToken: string
+  token: string;
+  refreshToken: string;
 }
 
 export const signIn = async (
-  credentials: SignInRequest
+  credentials: SignInRequest,
 ): Promise<SignInResponse> => {
   // Для тестирования - мок ответ
-  if (credentials.login === "test" && credentials.password === "test") {
+  if (credentials.email === "test1" && credentials.password === "test1") {
     const mockResponse: SignInResponse = {
       token:
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
       refreshToken: "mock-refresh-token",
-    }
-    return mockResponse
+    };
+    return mockResponse;
   }
 
   try {
@@ -28,19 +30,22 @@ export const signIn = async (
         "Content-Type": "application/json",
       },
       body: JSON.stringify(credentials),
-    })
+    });
+
+    const data: SignInResponse | ErrorResponse = await response.json()
 
     if (!response.ok) {
-      const errorText = await response.text()
-      throw new Error(
-        `HTTP error! status: ${response.status}, body: ${errorText}`
-      )
-    }
+      const message =
+        "message" in data && typeof data.message === "string"
+          ? data.message
+          : "Ошибка входа"
 
-    const data: SignInResponse = await response.json()
-    return data
+      throw new Error(message)
+    }
+    console.log("Sign In!");
+    return data as SignInResponse;
   } catch (error) {
-    console.error("Sign in error:", error)
-    throw error
+    console.error("Sign in error:", error);
+    throw error;
   }
-}
+};

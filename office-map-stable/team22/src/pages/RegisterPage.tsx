@@ -8,20 +8,53 @@ import {
   Stack,
   Alert,
 } from "@mui/material"
-import { useNavigate } from "react-router-dom"
-import { useState } from "react"
-import T1logo from "@entities/Header/assets/T1 logo blue.svg?react"
-import { register } from "@shared/api/Auth/Register"
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import T1logo from "@entities/Header/assets/T1 logo blue.svg?react";
+import { register } from "@shared/api/Auth/Register";
+import {jwtDecode} from "jwt-decode";
+import {sessionRestored} from "@shared/store/auth";
+import { useUnit } from "effector-react";
+
+interface JwtPayload {
+  sub: string
+  email?: string
+  name?: string
+  role?: string
+  exp: number
+  iat: number
+}
+
+export interface UserInfo {
+  id: string
+  email: string
+  name: string
+  role: string
+}
 
 function RegisterPage() {
   const navigate = useNavigate()
   const [formData, setFormData] = useState({
-    login: "",
+    email: "",
+    name: "",
     password: "",
   })
   const [error, setError] = useState<string>("")
   const [success, setSuccess] = useState<string>("")
   const [isLoading, setIsLoading] = useState(false)
+
+  const applySession = useUnit(sessionRestored)
+
+  // функция для декодирования токена и получения информации о пользователе для сохранения в локальном хранилище
+  const getUserInfo = (token: string): UserInfo => {
+    const payload = jwtDecode<JwtPayload>(token)
+    return {
+      id: payload.sub,
+      email: payload.email ?? "",
+      name: payload.name ?? "",
+      role: payload.role ?? ""
+    }
+  }
 
   const handleInputChange =
     (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,7 +70,7 @@ function RegisterPage() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
 
-    if (!formData.login.trim() || !formData.password.trim()) {
+    if (!formData.email.trim() || !formData.password.trim() || !formData.name) {
       setError("Пожалуйста, заполните все поля")
       return
     }
@@ -47,16 +80,31 @@ function RegisterPage() {
     setSuccess("")
 
     try {
+      // успешная регистрация
+      // сохраняем данные токенов в хранилище чтобы можно было сразу авторизоваться и также данные о пользователе
       const response = await register(formData)
-      setSuccess("Успешно. Ожидайте подтверждение")
+      setSuccess("Успешно. Ожидайте перехода на главную страницу")
+      const userInfo = getUserInfo(response.token)
+      
+      applySession({
+        token: response.token,
+        refreshToken: response.refreshToken,
+        user: userInfo,
+      })
+      
+      setTimeout(() => {
+        navigate('/')
+      }, 1000)
+
       // Очищаем форму после успешной регистрации
-      setFormData({ login: "", password: "" })
+      setFormData({ email: "", name: "", password: "" })
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка при регистрации")
     } finally {
       setIsLoading(false)
     }
   }
+
 
   return (
     <>
@@ -92,9 +140,9 @@ function RegisterPage() {
         >
           <Paper
             elevation={3}
-            sx={{ p: 4, borderRadius: 3, minWidth: 400, textAlign: "center" }}
+            sx={{ p: 4, borderRadius: 3, minWidth: 500, textAlign: "center" }}
           >
-            <Typography variant="h4" gutterBottom>
+            <Typography variant="h4" sx={{mb:3}}>
               Регистрация
             </Typography>
 
@@ -113,16 +161,26 @@ function RegisterPage() {
             <form onSubmit={handleSubmit}>
               <Stack spacing={2}>
                 <TextField
-                  label="Логин"
+                  label="email"
                   fullWidth
-                  value={formData.login}
-                  onChange={handleInputChange("login")}
+                  size="small"
+                  value={formData.email}
+                  onChange={handleInputChange("email")}
                   disabled={isLoading}
                 />
                 <TextField
-                  label="Пароль"
+                  label="name"
+                  fullWidth
+                  size="small"
+                  value={formData.name}
+                  onChange={handleInputChange("name")}
+                  disabled={isLoading}
+                />
+                <TextField
+                  label="password"
                   type="password"
                   fullWidth
+                  size="small"
                   value={formData.password}
                   onChange={handleInputChange("password")}
                   disabled={isLoading}

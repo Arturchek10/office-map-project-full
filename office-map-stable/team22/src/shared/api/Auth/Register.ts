@@ -1,13 +1,13 @@
 import { fetchJsonSafe } from "@shared/utils/fetchJsonSafe"
 
 interface RegisterRequest {
-  login: string
+  email: string
   password: string
 }
 
 interface RegisterResponse {
-  status: number
-  message: string
+  token: string,
+  refreshToken: string
 }
 
 interface ErrorResponse {
@@ -22,7 +22,7 @@ export const register = async (
   credentials: RegisterRequest
 ): Promise<RegisterResponse> => {
   try {
-    const response = await fetch("/api/v1/register", {
+    const response = await fetch("/api/v1/auth/register", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -48,7 +48,7 @@ export const register = async (
     }
 
     // Успешный ответ 201 - возвращаем пустой объект
-    return { status: response.status, message: "Registration successful" }
+    return data as RegisterResponse;
   } catch (error) {
     console.error("Register error:", error)
     throw error

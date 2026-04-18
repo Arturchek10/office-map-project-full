@@ -13,13 +13,14 @@ import { useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
 import T1logo from "@entities/Header/assets/T1 logo blue.svg?react"
 import { useAuthStore } from "@shared/store/auth"
+import { useUnit } from "effector-react"
 
 function AuthPage() {
   const navigate = useNavigate()
   const { login, isLoading, error, isAuthenticated, clearError } =
     useAuthStore()
   const [formData, setFormData] = useState({
-    login: "",
+    email: "",
     password: "",
   })
 
@@ -45,11 +46,11 @@ function AuthPage() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
 
-    if (!formData.login || !formData.password) {
-      return
+    if (!formData.email || !formData.password) {
+      return 
     }
 
-    login(formData.login, formData.password)
+    login(formData.email, formData.password)
   }
 
   return (
@@ -96,7 +97,7 @@ function AuthPage() {
 
             {error && (
               <Alert severity="error" sx={{ mb: 2 }}>
-                {error}
+                {error} 
               </Alert>
             )}
 
@@ -105,8 +106,8 @@ function AuthPage() {
                 <TextField
                   label="Логин"
                   fullWidth
-                  value={formData.login}
-                  onChange={handleInputChange("login")}
+                  value={formData.email}
+                  onChange={handleInputChange("email")}
                   disabled={isLoading}
                   required
                 />
@@ -124,7 +125,7 @@ function AuthPage() {
                   variant="contained"
                   color="primary"
                   type="submit"
-                  disabled={isLoading || !formData.login || !formData.password}
+                  disabled={isLoading || !formData.email || !formData.password}
                   sx={{ position: "relative" }}
                 >
                   {isLoading ? (

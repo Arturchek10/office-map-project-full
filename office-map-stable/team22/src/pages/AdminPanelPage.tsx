@@ -288,7 +288,7 @@ const AdminPanelPage: React.FC = () => {
                           {user.id}
                         </TableCell>
                         <TableCell sx={{ fontSize: "14px" }}>
-                          {user.login}
+                          {user.email}
                         </TableCell>
                         <TableCell sx={{ fontSize: "14px" }}>
                           {user.role}
