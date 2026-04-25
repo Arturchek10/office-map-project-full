@@ -11,7 +11,6 @@
 import {
   $auth,
   logoutRequested,
-  // refreshTokensRequested,
 } from "@shared/store/auth";
 import { refreshToken } from "@shared/api/Auth/RefreshToken";
 
@@ -45,8 +44,10 @@ export const createApiRequest = async (
 ): Promise<Response> => {
   // Подстановка токена
   const authState = $auth.getState();
-  const token = authState.token;
-
+  const token = authState.token || localStorage.getItem("auth-token");
+  const refreshTokenValue =
+    authState.refreshToken || localStorage.getItem("auth-refresh-token");
+  console.log("token :", token);
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string>),
   };
@@ -60,13 +61,29 @@ export const createApiRequest = async (
   }
 
   // Универсальный fetch. Любая ошибка попадает в exception и выводится.
-  const fetchWithCheck = async (
-    customHeaders: Record<string,string>,
-  ): Promise<Response> => {
+  const fetchWithCheck = async (customHeaders: Record<string, string>,): Promise<Response> => {
     const res = await fetch(url, { ...options, headers: customHeaders });
+    console.log("REQUEST:", {
+      url,
+      method: options.method,
+      headers: customHeaders
+    } )
     if (!res.ok) {
       const text = await res.text().catch(() => "");
-      throw new Error(`HTTP ${res.status}: ${text}`);
+
+      let message = `Ошибка ${res.status}`;
+
+      try {
+        const data = JSON.parse(text);
+        message = data.message || message;
+
+      } catch {
+        if (text) {
+          message = text;
+        }
+      }
+
+      throw new Error(message);
     }
     return res;
   };
@@ -75,19 +92,18 @@ export const createApiRequest = async (
     return await fetchWithCheck(headers);
   } catch (err: any) {
     // Обработка 401
-      // Если 401 и есть refreshToken
-      // Если токен истёк:
-      // Проверяет "Token expired"
-      // Запускает refresh токена
-      // Обновляет store
-      // Повторяет запрос
-    if (err.message.includes("HTTP 401") && authState.refreshToken) {
+    // Если 401 и есть refreshToken
+    // Если токен истёк:
+    // Проверяет "Token expired"
+    // Запускает refresh токена
+    // Обновляет store
+    // Повторяет запрос
+    if (err.message.includes("HTTP 401") && refreshTokenValue) {
       const errorData = await fetch(url, { ...options, headers }).then((r) =>
         r.json().catch(() => ({})),
       );
 
-
-      // 
+      //
       if (errorData.message === "Token expired") {
         if (isRefreshing) {
           return new Promise<string>((resolve, reject) => {
@@ -97,13 +113,13 @@ export const createApiRequest = async (
               ...headers,
               Authorization: `Bearer ${newToken}`,
             };
-            return fetchWithCheck(newHeaders)
+            return fetchWithCheck(newHeaders);
           });
         }
 
         isRefreshing = true;
         try {
-          const newTokens = await refreshToken(authState.refreshToken);
+          const newTokens = await refreshToken(refreshTokenValue);
           // refreshTokensRequested({
           //   token: newTokens.token,
           //   refreshToken: newTokens.refreshToken,
@@ -111,8 +127,8 @@ export const createApiRequest = async (
 
           const newHeaders = {
             ...headers,
-            Authorization: `Bearer ${newTokens.token}`
-          }
+            Authorization: `Bearer ${newTokens.token}`,
+          };
 
           const retryResponse = await fetchWithCheck(newHeaders);
           processQueue(null, newTokens.token);
@@ -183,5 +199,7 @@ export const apiPostFormData = (
     ...options,
     method: "POST",
     body: formData,
-    headers: { ...options?.headers },
+    headers: {
+      ...options?.headers,
+    },
   });

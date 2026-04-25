@@ -9,6 +9,13 @@ interface OfficeProps extends TOffice {
   active?: boolean
 }
 
+const getImageUrl = (path?: string | null) => {
+  if (!path) return '/placeholder-office-png'
+  if (path.startsWith('http')) return path
+  console.log(path)
+  return `http://localhost:8080${path}`
+}
+
 function Office({
   photoUrl,
   name,
@@ -26,7 +33,7 @@ function Office({
       elevation={active ? 8 : 1}
     >
       <CardActionArea>
-        <CardMedia component="img" height="140" image={photoUrl} alt={name} />
+        <CardMedia component="img" height="140" image={getImageUrl(photoUrl)} alt={name} />
         <CardContent>
           <Typography gutterBottom variant="h5" component="div">
             {name}

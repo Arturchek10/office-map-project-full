@@ -9,6 +9,8 @@ export const addOfficeFx = createEffect<FormData, TOffice, Error>(
         headers: { Accept: "application/json" },
       })
 
+      console.log('status', res.status);
+      console.log('content-type', res.headers.get("content-type"))
       const contentType = res.headers.get("content-type") || ""
 
       if (!res.ok) {
@@ -29,6 +31,7 @@ export const addOfficeFx = createEffect<FormData, TOffice, Error>(
 
       return await res.json()
     } catch (e) {
+      // надо ловить ошибку и выводить на фронт
       console.error("Ошибка создания офиса:", e)
       throw e
     }

@@ -94,7 +94,12 @@ function OfficesBar({
       handleCloseMenu()
     }
   }
+  // Добавление/изменение этажей
+  const handleEdit = async () => {
+    if (!selectedOfficeId) return
 
+    navigate(`/office/${selectedOfficeId}/createfloor`)
+  }
   useEffect(() => {
     if (activeOfficeId != null) {
       const officeEl = officeRefs.current[activeOfficeId]
@@ -118,7 +123,8 @@ function OfficesBar({
           pl: "10px",
           left: open ? drawerWidth : -(250 - drawerWidth),
           width: 250,
-          maxHeight: "calc(100vh - 60px)",
+          height: "100vh",
+          // maxHeight: "calc(100vh - 60px)",
           bgcolor: "white",
           boxShadow: 3,
           overflowY: "auto",
@@ -141,7 +147,7 @@ function OfficesBar({
                 cursor: "pointer",
                 transition: "background-color 0.2s ease",
               }}
-              onClick={() => handleClick(office.id)}
+              // onClick={() => handleClick(office.id)}
               onContextMenu={(e) => handleContextMenu(e, office.id)}
             >
               <Office {...office} active={isActive} />
@@ -156,6 +162,7 @@ function OfficesBar({
         open={Boolean(menuPos)}
         onClose={handleCloseMenu}
         onDelete={handleDelete}
+        onEdit={handleEdit}
       />
 
       {/* Snackbar для уведомлений */}

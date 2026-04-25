@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -201,6 +203,37 @@ public class GlobalExceptionHandler {
                         .subErrors(Collections.emptyList())
                         .build());
     }
+
+    @ExceptionHandler(AuthenticationCredentialsNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAuthenticationCredentialsNotFound(
+            AuthenticationCredentialsNotFoundException ex,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ErrorResponse.builder()
+                        .status(HttpStatus.UNAUTHORIZED.value())
+                        .message("Пользователь не авторизован")
+                        .timestamp(LocalDateTime.now())
+                        .path(request.getRequestURI())
+                        .subErrors(Collections.emptyList())
+                        .build());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(
+            AccessDeniedException ex,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ErrorResponse.builder()
+                        .status(HttpStatus.FORBIDDEN.value())
+                        .message("Недостаточно прав для выполнения операции")
+                        .timestamp(LocalDateTime.now())
+                        .path(request.getRequestURI())
+                        .subErrors(Collections.emptyList())
+                        .build());
+    }
+
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception ex, HttpServletRequest request) {

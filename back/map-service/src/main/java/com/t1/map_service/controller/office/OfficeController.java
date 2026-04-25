@@ -38,7 +38,7 @@ public class OfficeController implements OfficeApi {
 
     @Override
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAuthority('WORKSPACE_ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<OfficeDto> createOffice(
             @RequestPart("data") @Valid  OfficeCreateRequest request,
             @RequestPart(value = "photo", required = false) MultipartFile photo
@@ -48,7 +48,8 @@ public class OfficeController implements OfficeApi {
 
     @Override
     @PatchMapping(value = "/{officeId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("@perm.canManageOffice(authentication, #officeId)")
+    @PreAuthorize("hasAuthority('ADMIN')")
+//    @PreAuthorize("@perm.canManageOffice(authentication, #officeId)")
     public ResponseEntity<OfficeDto> updateOffice(
             @PathVariable Long officeId,
             @RequestPart("data") @Valid  OfficeUpdateRequest dto,
@@ -59,7 +60,8 @@ public class OfficeController implements OfficeApi {
 
     @Override
     @DeleteMapping("/{officeId}")
-    @PreAuthorize("@perm.canManageOffice(authentication, #officeId)")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    //@PreAuthorize("@perm.canManageOffice(authentication, #officeId)")
     public ResponseEntity<Void> deleteOffice(
             @PathVariable Long officeId
     ) {

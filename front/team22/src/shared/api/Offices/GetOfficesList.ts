@@ -6,7 +6,7 @@ import { apiGet } from "@shared/utils/api";
 
 export const fetchOfficesFx = createEffect<void, TOffice[], Error>(async () => {
   // мок
-  const USE_MOCK = true;
+  const USE_MOCK = false;
   if (USE_MOCK) {
     return [
       {

@@ -28,7 +28,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
-
+            System.out.println("JWT FILTER WORKS");
+            System.out.println("AUTH HEADER: " + authHeader);
             try{
                 Claims claims = Jwts.parser()
                         .verifyWith(key)
@@ -48,6 +49,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (Exception e) {
+                System.out.println("JWT ERROR: " + e.getMessage());
+                SecurityContextHolder.clearContext();
                 SecurityContextHolder.clearContext();
             }
         }

@@ -9,6 +9,7 @@ import { ProtectedRoute } from "@shared/components/ProtectedRoute"
 import { initAuth } from "@shared/store/auth"
 import { useEffect } from "react"
 import { useUnit } from "effector-react"
+import { ErrorSnackbar } from "@shared/ui/ErrorSnackbar"
 
 function App() {
   const startAuth = useUnit(initAuth)
@@ -55,6 +56,7 @@ function App() {
           }
         />
       </Routes>
+      <ErrorSnackbar />
     </BrowserRouter>
   )
 }

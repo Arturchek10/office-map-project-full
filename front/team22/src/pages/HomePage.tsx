@@ -19,7 +19,7 @@ import {
   fetchOfficesFx,
 } from "@shared/api/Offices/GetOfficesList"
 import Header from "@entities/Header/Header"
-import NewOfficesBar from "@features/addundNewOffices/NewOfficesBar"
+import NewOfficesBar from "@features/addingNewOffices/NewOfficesBar"
 import { addOfficeFx } from "@shared/api/Offices/AddOffice"
 
 
@@ -60,6 +60,8 @@ function HomePage() {
   const handleAddOffice = (formData: FormData) => {
     addOfficeFx(formData)
       .then(() => {
+        // fetchOfficesFx()
+
         setSnackbar({
           open: true,
           message: "✅ Офис успешно сохранён!",

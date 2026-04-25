@@ -74,7 +74,15 @@ const ymapsApi = useYMaps(["geocode"]) as YMapsApi | null
       if (formData.photo) {
         data.append("photo", formData.photo)
       }
-
+      // вывод в консоль данных офиса
+      for (let [key, value] of data.entries()){
+        if (value instanceof Blob){
+          console.log(key, value.type, value.size);
+          console.log(await value.text());
+        } else {
+          console.log(key,value)
+        }
+      }
       onAddOffice(data)
       console.log(data)
       setFormData({
