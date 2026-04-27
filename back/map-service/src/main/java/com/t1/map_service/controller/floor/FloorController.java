@@ -32,7 +32,8 @@ public class FloorController implements FloorApi {
 
     @Override
     @PostMapping("/{officeId}")
-    @PreAuthorize("@perm.canManageOffice(authentication, #officeId)")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    //@PreAuthorize("@perm.canManageOffice(authentication, #officeId)")
     public ResponseEntity<FloorViewDto> create(
             @RequestBody @Valid FloorCreateRequest dto,
             @PathVariable Long officeId
@@ -42,7 +43,8 @@ public class FloorController implements FloorApi {
 
     @Override
     @PatchMapping("/{floorId}")
-    @PreAuthorize("@perm.canManageFloor(authentication, #floorId)")
+//    @PreAuthorize("@perm.canManageFloor(authentication, #floorId)")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<FloorViewDto> update(
             @PathVariable Long floorId,
             @RequestBody @Valid FloorUpdateRequest dto
@@ -52,7 +54,9 @@ public class FloorController implements FloorApi {
 
     @Override
     @PatchMapping(value = "/plan/{floorId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("@perm.canManageFloor(authentication, #floorId)")
+    @PreAuthorize("hasAuthority('ADMIN')")
+
+//    @PreAuthorize("@perm.canManageFloor(authentication, #floorId)")
     public ResponseEntity<FloorViewDto> uploadPlan(
             @PathVariable Long floorId,
             @RequestPart("data") @Valid FloorPlanPatchRequest data,
@@ -66,7 +70,8 @@ public class FloorController implements FloorApi {
 
     @Override
     @DeleteMapping("/{floorId}")
-    @PreAuthorize("@perm.canManageFloor(authentication, #floorId)")
+    @PreAuthorize("hasAuthority('ADMIN')")
+//    @PreAuthorize("@perm.canManageFloor(authentication, #floorId)")
     public ResponseEntity<Void> delete(
             @PathVariable Long floorId
     ) {

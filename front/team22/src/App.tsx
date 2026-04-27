@@ -40,7 +40,7 @@ function App() {
           }
         />
         <Route
-          path="/office/:officeid/createfloor"
+          path="/office/:officeId/createfloor"
           element={
             <ProtectedRoute>
               <AddFloor />

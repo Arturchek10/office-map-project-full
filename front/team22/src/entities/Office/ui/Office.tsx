@@ -21,7 +21,7 @@ function Office({
   name,
   city,
   address,
-  active = false,
+  active = false, // выделена ли карточка оффиса или нет. Синий фон если выделена
 }: OfficeProps) {
   return (
     <Card

@@ -43,7 +43,17 @@ public class LocalFileStorageService implements FileStorageService {
 
     @Override
     public void deleteImage(String objectKey) {
-        // пока можно оставить пустым
+        if (objectKey == null || objectKey.isBlank()) return;
+
+        try {
+            // убираем /uploads/ из пути
+            String relativePath = objectKey.replaceFirst("/uploads/", "");
+
+            Path filePath = Paths.get("uploads").resolve(relativePath);
+            Files.deleteIfExists(filePath);
+        } catch(Exception e) {
+            throw new RuntimeException("Failed to delete file locally", e);
+        }
     }
 
     @Override

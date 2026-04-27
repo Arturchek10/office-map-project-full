@@ -50,8 +50,12 @@ function HomePage() {
 
   const toggleOfficesBar = () => setIsOfficesBarOpen((prev) => !prev)
 
+  // Единая точка выбора офиса.
+  // Используется и картой, и боковой панелью.
+  // Повторный клик по активному офису снимает выделение.
   const handleSetActiveOfficeId = (id: number | null) => {
-    setActiveOfficeId(id)
+    setActiveOfficeId((prev) => (prev === id ? null: id))
+    console.log("метод внутри HomePage: handleSetActiveOfficeId")
     if (!isOfficesBarOpen && id !== null) {
       setIsOfficesBarOpen(true)
     }
@@ -126,6 +130,7 @@ function HomePage() {
           offices={offices}
           open={isOfficesBarOpen}
           activeOfficeId={activeOfficeId}
+          handleSetActiveOfficeId={handleSetActiveOfficeId} //
         />
         <YMaps
           query={{

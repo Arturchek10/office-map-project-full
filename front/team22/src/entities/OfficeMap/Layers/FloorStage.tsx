@@ -12,6 +12,7 @@ type FloorStageProps = {
   clickedMarker: MarkerResponse | null
   setClickedMarker: (m: MarkerResponse | null) => void
   markers: Marker[]
+  newMarkerId: number | null
   image?: HTMLImageElement | null
   imageStatus: "loading" | "loaded" | "failed"
   startImagePosition: { x: number; y: number }
@@ -44,7 +45,7 @@ type FloorStageProps = {
 export default function FloorStage(props: FloorStageProps) {
   return (
     <Stage
-      ref={props.stageRef}
+      ref={props.stageRef}  
       width={props.stageSize.x}
       height={props.stageSize.y}
       draggable
@@ -112,6 +113,7 @@ export default function FloorStage(props: FloorStageProps) {
 
       <MarkersLayer
         markers={props.markers}
+        newMarkerId={props.newMarkerId}
         clickedMarker={props.clickedMarker}
         handleCircleClick={props.handleCircleClick}
         markerScale={props.markerScale}

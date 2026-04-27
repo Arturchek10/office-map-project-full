@@ -52,7 +52,9 @@ export const addFloorFx = createEffect<
   const res = await apiPost(`/api/v1/floors/${officeId}`, floor, {
     headers: { Accept: "application/json" },
   })
-
+  
+  console.log(officeId);
+  
   const contentType = res.headers.get("content-type") || ""
 
   if (!res.ok) {

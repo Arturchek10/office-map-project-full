@@ -24,7 +24,8 @@ public class MarkerController implements MarkerApi {
 
     @Override
     @PostMapping("/{layerId}")
-    @PreAuthorize("@perm.canManageLayer(authentication, #layerId)")
+    @PreAuthorize("hasAuthority('ADMIN')")
+//    @PreAuthorize("@perm.canManageLayer(authentication, #layerId)")
     public ResponseEntity<MarkerDto> createMarker(
             @PathVariable Long layerId,
             @RequestBody @Valid  CreateMarkerRequest dto
@@ -50,7 +51,8 @@ public class MarkerController implements MarkerApi {
 
     @Override
     @PatchMapping("/{markerId}")
-    @PreAuthorize("@perm.canManageMarker(authentication, #markerId)")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    //@PreAuthorize("@perm.canManageMarker(authentication, #markerId)")
     public ResponseEntity<MarkerDto> updateMarker(
             @RequestBody @Valid UpdateMarkerRequest dto,
             @PathVariable Long markerId
@@ -60,7 +62,8 @@ public class MarkerController implements MarkerApi {
 
     @Override
     @PatchMapping("/move/{markerId}")
-    @PreAuthorize("@perm.canManageMarker(authentication, #markerId)")
+    @PreAuthorize("hasAuthority('ADMIN')")
+//    @PreAuthorize("@perm.canManageMarker(authentication, #markerId)")
     public ResponseEntity<MarkerDto> move(
             @PathVariable Long markerId,
             @RequestBody @Valid MarkerMoveRequest dto
@@ -70,7 +73,8 @@ public class MarkerController implements MarkerApi {
 
     @Override
     @DeleteMapping("/{markerId}")
-    @PreAuthorize("@perm.canManageMarker(authentication, #markerId)")
+    @PreAuthorize("hasAuthority('ADMIN')")
+//    @PreAuthorize("@perm.canManageMarker(authentication, #markerId)")
     public ResponseEntity<Void> deleteMarker(
             @PathVariable Long markerId
     ) {

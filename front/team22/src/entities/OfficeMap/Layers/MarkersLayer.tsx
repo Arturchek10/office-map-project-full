@@ -11,6 +11,7 @@ type MarkersProps = {
   markers: Marker[];
   visibleTypes: MarkerTypes[];
   clickedMarker: MarkerResponse | null;
+  newMarkerId: number | null;
   imageStatus: string;
   markerScale: number;
   startImagePosition: { x: number; y: number };
@@ -25,6 +26,7 @@ export default function MarkersLayer({
   markers,
   visibleTypes,
   clickedMarker,
+  newMarkerId,
   imageStatus,
   markerScale,
   startImagePosition,
@@ -84,33 +86,28 @@ export default function MarkersLayer({
   // --- Анимация падения при добавлении ---
   const prevMarkers = useRef<Marker[]>(markers);
   useEffect(() => {
-    const prev = prevMarkers.current;
+  if (!newMarkerId) return;
 
-    if (markers.length > prev.length) {
-      const addedMarker = markers.find(
-        (m) => !prev.some((pm) => pm.id === m.id)
-      );
-      if (addedMarker) {
-        const markerIndex = markers.findIndex((m) => m.id === addedMarker.id);
-        const markerNode = markersRef.current[markerIndex];
-        if (!markerNode) return;
+  const addedMarker = markers.find((m) => m.id === newMarkerId);
+  if (!addedMarker) return;
 
-        markerNode.y(0);
-        const finalY =
-          addedMarker.position.position_y * startImageScale +
-          startImagePosition.y;
+  const markerIndex = markers.findIndex((m) => m.id === addedMarker.id);
+  const markerNode = markersRef.current[markerIndex];
+  if (!markerNode) return;
 
-        new Konva.Tween({
-          node: markerNode,
-          duration: 2,
-          y: finalY,
-          easing: Konva.Easings.BounceEaseOut,
-        }).play();
-      }
-    }
+  markerNode.y(0);
 
-    prevMarkers.current = markers;
-  }, [markers, startImageScale, startImagePosition.y]);
+  const finalY =
+    addedMarker.position.position_y * startImageScale +
+    startImagePosition.y;
+
+  new Konva.Tween({
+    node: markerNode,
+    duration: 2,
+    y: finalY,
+    easing: Konva.Easings.BounceEaseOut,
+  }).play();
+}, [newMarkerId, markers, startImageScale, startImagePosition.y]);
 
   // --- Следим за перетаскиванием и позиционированием свечения ---
   useEffect(() => {

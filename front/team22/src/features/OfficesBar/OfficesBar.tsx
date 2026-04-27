@@ -1,20 +1,22 @@
-import { Box } from "@mui/material"
-import Office from "@entities/Office/ui/Office"
-import type { TOffice } from "@entities/Office/type/office"
-import { drawerWidth } from "@features/OfficesBar/config/config"
-import { useEffect, useRef, useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { fetchOfficeByIdFx } from "@shared/api/Offices/GetOfficeById"
-import { getFloorByIdFx } from "@shared/store/dataFromFloor"
-import { deleteOfficeFx } from "@shared/api/Offices/DeleteOffice"
-import PositionedMenuOffice from "./PositionedMenuOffice"
-import { Snackbar, Alert } from "@mui/material"
+import { Box } from "@mui/material";
+import Office from "@entities/Office/ui/Office";
+import type { TOffice } from "@entities/Office/type/office";
+import { drawerWidth } from "@features/OfficesBar/config/config";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { fetchOfficeByIdFx } from "@shared/api/Offices/GetOfficeById";
+import { getFloorByIdFx } from "@shared/store/dataFromFloor";
+import { deleteOfficeFx } from "@shared/api/Offices/DeleteOffice";
+import PositionedMenuOffice from "./PositionedMenuOffice";
+import { Snackbar, Alert } from "@mui/material";
+
 //
 interface OfficesBarProps {
-  offices: TOffice[]
-  open: boolean
-  activeOfficeId?: number | null
-  onUserNavigation?: () => void
+  offices: TOffice[];
+  open: boolean;
+  activeOfficeId?: number | null;
+  onUserNavigation?: () => void;
+  handleSetActiveOfficeId?: (id: number | null) => void;
 }
 
 function OfficesBar({
@@ -22,95 +24,116 @@ function OfficesBar({
   open,
   activeOfficeId,
   onUserNavigation,
+  // изменение активности офиса из HomePage
+  handleSetActiveOfficeId,
 }: OfficesBarProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const officeRefs = useRef<{ [key: number]: HTMLDivElement | null }>({})
-  const navigate = useNavigate()
+  const containerRef = useRef<HTMLDivElement>(null);
+  const officeRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
+  const navigate = useNavigate();
 
   // Состояние для контекстного меню
-  const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null)
-  const [selectedOfficeId, setSelectedOfficeId] = useState<number | null>(null)
+  const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const [selectedOfficeId, setSelectedOfficeId] = useState<number | null>(null);
   const [snackbar, setSnackbar] = useState<{
-    open: boolean
-    message: string
-    severity: "success" | "error"
-  }>({ open: false, message: "", severity: "success" })
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({ open: false, message: "", severity: "success" });
 
   const handleClick = (id: number) => {
     // Устанавливаем флаг, что переход инициирован пользователем
     if (onUserNavigation) {
-      onUserNavigation()
+      onUserNavigation();
     }
 
-    fetchOfficeByIdFx(id)
+    fetchOfficeByIdFx(id);
     fetchOfficeByIdFx.done.watch(({ result }) => {
       if (result.startFloor === null) {
-        navigate(`/office/${id}/createfloor`)
+        navigate(`/office/${id}/createfloor`);
       } else {
-        navigate(`/office/${id}/floor/${result.startFloor.id}`)
-        getFloorByIdFx(result.startFloor.id)
+        navigate(`/office/${id}/floor/${result.startFloor.id}`);
+        getFloorByIdFx(result.startFloor.id);
       }
-    })
-  }
+    });
+  };
 
   // Обработчик правой кнопки мыши
   const handleContextMenu = (e: React.MouseEvent, id: number) => {
-    e.preventDefault()
-    setMenuPos({ x: e.clientX, y: e.clientY })
-    setSelectedOfficeId(id)
-  }
+    e.preventDefault();
+    setMenuPos({ x: e.clientX, y: e.clientY });
+    setSelectedOfficeId(id);
+  };
 
   // Закрытие контекстного меню
   const handleCloseMenu = () => {
-    setMenuPos(null)
-    setSelectedOfficeId(null)
-  }
+    setMenuPos(null);
+    setSelectedOfficeId(null);
+  };
 
   // Удаление офиса
   const handleDelete = async () => {
-    if (!selectedOfficeId) return
+    if (!selectedOfficeId) return;
     try {
-      await deleteOfficeFx(selectedOfficeId)
+      await deleteOfficeFx(selectedOfficeId);
       // Store обновится автоматически через deleteOfficeFx.doneData
 
       // Если удаляется активный офис, перенаправляем на главную страницу
       if (selectedOfficeId === activeOfficeId) {
-        navigate("/")
+        navigate("/");
       }
 
       setSnackbar({
         open: true,
         message: "Офис удален",
         severity: "success",
-      })
+      });
     } catch (e) {
-      console.error("Ошибка при удалении офиса:", e)
+      console.error("Ошибка при удалении офиса:", e);
       setSnackbar({
         open: true,
         message: "Ошибка при удалении",
         severity: "error",
-      })
+      });
     } finally {
-      handleCloseMenu()
+      handleCloseMenu();
     }
-  }
-  // Добавление/изменение этажей
+  };
+  
+  // если этаж уже есть - открыть редактор, если нет - открыть создание этажа
   const handleEdit = async () => {
-    if (!selectedOfficeId) return
+    if (!selectedOfficeId) return;
 
-    navigate(`/office/${selectedOfficeId}/createfloor`)
-  }
+    try {
+      const office = await fetchOfficeByIdFx(selectedOfficeId);
+
+      if (office.startFloor === null) {
+        navigate(`/office/${selectedOfficeId}/createfloor`);
+      } else {
+        navigate(`/office/${selectedOfficeId}/floor/${office.startFloor.id}`);
+        getFloorByIdFx(office.startFloor.id);
+      }
+    } catch (e) {
+      console.error("Ошибка при открытии редактора офиса:", e);
+      setSnackbar({
+        open: true,
+        message: "Ошибка при открытии редактора",
+        severity: "error",
+      });
+    } finally {
+      handleCloseMenu();
+    }
+  };
   useEffect(() => {
     if (activeOfficeId != null) {
-      const officeEl = officeRefs.current[activeOfficeId]
+      const officeEl = officeRefs.current[activeOfficeId];
       if (officeEl) {
         officeEl.scrollIntoView({
           behavior: "smooth",
           block: "center",
-        })
+        });
       }
     }
-  }, [activeOfficeId])
+  }, [activeOfficeId]);
 
   return (
     <>
@@ -123,7 +146,7 @@ function OfficesBar({
           pl: "10px",
           left: open ? drawerWidth : -(250 - drawerWidth),
           width: 250,
-          height: "100vh",
+          height: "calc(100vh - 60px)",
           // maxHeight: "calc(100vh - 60px)",
           bgcolor: "white",
           boxShadow: 3,
@@ -134,12 +157,12 @@ function OfficesBar({
         }}
       >
         {offices.map((office) => {
-          const isActive = String(office.id) === String(activeOfficeId)
+          const isActive = String(office.id) === String(activeOfficeId);
           return (
             <Box
               key={office.id}
               ref={(el: HTMLDivElement | null) => {
-                officeRefs.current[office.id] = el
+                officeRefs.current[office.id] = el;
               }}
               sx={{
                 borderRadius: "4px",
@@ -147,12 +170,13 @@ function OfficesBar({
                 cursor: "pointer",
                 transition: "background-color 0.2s ease",
               }}
+              onClick={() => handleSetActiveOfficeId?.(office.id)}
               // onClick={() => handleClick(office.id)}
               onContextMenu={(e) => handleContextMenu(e, office.id)}
             >
               <Office {...office} active={isActive} />
             </Box>
-          )
+          );
         })}
       </Box>
 
@@ -181,7 +205,7 @@ function OfficesBar({
         </Alert>
       </Snackbar>
     </>
-  )
+  );
 }
 
-export default OfficesBar
+export default OfficesBar;

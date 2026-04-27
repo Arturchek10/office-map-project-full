@@ -1,3 +1,5 @@
+// компонент
+
 import { YMaps, Map, Placemark, useYMaps } from "@pbe/react-yandex-maps"
 import {
   Box,

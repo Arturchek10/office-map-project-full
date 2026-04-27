@@ -1,4 +1,4 @@
-import Header from "@entities/Header/Header"
+import Header from "@entities/Header/Header";
 import {
   CssBaseline,
   Box,
@@ -10,71 +10,78 @@ import {
   Stack,
   Snackbar,
   Alert,
-} from "@mui/material"
-import NavBar from "@entities/NavBar/NavBar"
-import OfficesBar from "@features/OfficesBar/OfficesBar"
-import { useState } from "react"
-import { useUnit } from "effector-react"
+} from "@mui/material";
+import NavBar from "@entities/NavBar/NavBar";
+import OfficesBar from "@features/OfficesBar/OfficesBar";
+import { useState } from "react";
+import { useUnit } from "effector-react";
 import {
   $offices,
   $officesError,
   $officesLoading,
-} from "@shared/api/Offices/GetOfficesList"
-import { $activeOffice } from "@shared/api/Offices/GetOfficeById"
-import { addFloorFx } from "@shared/api/Floors/AddFloor"
-import { useNavigate } from "react-router-dom"
-import { $activeFloor } from "@shared/api/Floors/AddFloor"
+} from "@shared/api/Offices/GetOfficesList";
+import { $activeOffice } from "@shared/api/Offices/GetOfficeById";
+import { addFloorFx } from "@shared/api/Floors/AddFloor";
+import { useNavigate, useParams } from "react-router-dom";
+import { $activeFloor } from "@shared/api/Floors/AddFloor";
 function AddFloor() {
-  const [isOfficesBarOpen, setIsOfficesBarOpen] = useState(false)
+  const [isOfficesBarOpen, setIsOfficesBarOpen] = useState(false);
   const toggleOfficesBar = () => {
-    setIsOfficesBarOpen((prev) => !prev)
-  }
+    setIsOfficesBarOpen((prev) => !prev);
+  };
 
   const [offices, loading, error] = useUnit([
     $offices,
     $officesLoading,
     $officesError,
-  ])
-  const navigator = useNavigate()
-  const [name, setName] = useState("")
-  const [orderNumber, setOrderNumber] = useState("")
+  ]);
+  const navigator = useNavigate();
+  const [name, setName] = useState("");
+  const [orderNumber, setOrderNumber] = useState("");
 
-  const activeOffice = useUnit($activeOffice)
-  const activeFloor = useUnit($activeFloor)
+  // достаем id нуного офиса из url
+  const { officeId } = useParams();
+  const currentOfficeId = Number(officeId);
+
+  const activeOffice = useUnit($activeOffice);
+  const activeFloor = useUnit($activeFloor);
   const [snackbar, setSnackbar] = useState<{
-    open: boolean
-    message: string
-    severity: "success" | "error"
-  }>({ open: false, message: "", severity: "success" })
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({ open: false, message: "", severity: "success" });
 
   const handleSubmit = async () => {
-    if (!name || !orderNumber) return
+    console.log("activeOffice?.id", Number(currentOfficeId));
+    if (!name || !orderNumber) return;
 
     try {
       const newFloor = {
         name,
         orderNumber: Number(orderNumber),
-      }
-      await addFloorFx({
-        officeId: Number(activeOffice?.id),
+      };
+      const createdFloor = await addFloorFx({
+        officeId: currentOfficeId,
         floor: newFloor,
-      })
+      });
+      console.log(createdFloor)
       setSnackbar({
         open: true,
         message: "✅ Этаж успешно создан!",
         severity: "success",
-      })
+      });
 
-      setName("")
-      setOrderNumber("")
+      setName("");
+      setOrderNumber("");
+      navigator(`/office/${currentOfficeId}/floor/${createdFloor.id}`)
     } catch (e) {
       setSnackbar({
         open: true,
         message: (e as Error).message || "❌ Ошибка при создании этажа",
         severity: "error",
-      })
+      });
     }
-  }
+  };
 
   if (error) {
     return (
@@ -91,7 +98,7 @@ function AddFloor() {
           Ошибка загрузки офисов: {error?.message || "Неизвестная ошибка"}
         </Typography>
       </Box>
-    )
+    );
   }
 
   if (loading) {
@@ -106,7 +113,7 @@ function AddFloor() {
       >
         <CircularProgress size={80} />
       </Box>
-    )
+    );
   }
 
   return (
@@ -129,7 +136,10 @@ function AddFloor() {
           <Button
             variant="contained"
             sx={{ position: "absolute", top: 80, right: 30 }}
-            onClick={()=> navigator(`/office/${activeOffice?.id}/floor/${activeFloor?.id}`)}
+            // пока не нужно, переходим в редактор сразу после создания этажа 
+            // onClick={() =>
+            //   navigator(`/office/${officeId}/floor/${createdFloor.id}`)
+            // }
           >
             Перейти к редактору
           </Button>
@@ -192,7 +202,7 @@ function AddFloor() {
         </Alert>
       </Snackbar>
     </>
-  )
+  );
 }
 
-export default AddFloor
+export default AddFloor;
