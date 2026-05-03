@@ -12,6 +12,7 @@ type PositionMenuProps = {
   selectedMarkerId: number | null;
   activeOfficeId: number;
   onShowDeleteAlert: () => void;
+  openBookingForm: () => void;
 };
 
 export default function PositionedMenu({
@@ -22,6 +23,7 @@ export default function PositionedMenu({
   selectedMarkerId,
   activeOfficeId,
   onShowDeleteAlert,
+  openBookingForm
 }: PositionMenuProps) {
   const open = Boolean(anchorForCircle);
   const [getFloorById] = useUnit([getFloorByIdFx]);
@@ -38,6 +40,16 @@ export default function PositionedMenu({
         }
         transitionDuration={1000}
       >
+        <MenuItem
+          onClick={() => {
+            onClose(); // закрытие меню выбора
+            openBookingForm();
+            console.log("openBookingForm() в компоненте DeleteRedactMenu");
+            // открытие формы с временем где можно забронировать
+          }}
+        >
+        Забронировать
+        </MenuItem>
         <MenuItem
           onClick={() => {
             onClose();

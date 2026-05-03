@@ -38,6 +38,8 @@ import AddFloorButton from "@entities/elements/AddFloorButton";
 import { getMarker } from "@shared/api/markers";
 import { deleteFurnitureFx } from "@shared/api/Furniture/DeleteFurniture";
 import { getImageUrl } from "@shared/utils/getImageUrl";
+import BookingMarkerForm from "@entities/BookingMarkerForm/BookingMarkerForm";
+
 export default function OfficeMap() {
   // сторы
   // размер изображения
@@ -84,6 +86,7 @@ export default function OfficeMap() {
   );
 
   const [isRedactorOpen, setIsRedactorOpen] = useState(false);
+  const [isBookingFormOpen, setIsBookingFormOpen] = useState(false);
   // Furniture
   const [panelOpen, setPanelOpen] = useState(false);
   const [furnitureOnMap, setFurnitureOnMap] = useState<
@@ -668,6 +671,7 @@ export default function OfficeMap() {
                 selectedMarkerId={clickedMarker?.id ?? null}
                 activeOfficeId={activeOffice?.startFloor.id}
                 onShowDeleteAlert={onShowDeleteAlert}
+                openBookingForm={() => setIsBookingFormOpen(true)}
               />
             )}
 
@@ -704,12 +708,21 @@ export default function OfficeMap() {
           />
         </div>
       </Fade>
-
+      {/* форма редактирования маркера (название/тип и тд) */}
       <RedactorMenu
         isOpen={isRedactorOpen}
         onClose={() => setIsRedactorOpen(false)}
         selectedMarker={clickedMarker}
         onUpdate={async (updatedMarker) => setClickedMarker(updatedMarker)}
+      />
+      {/* форма бронирования маркера (время\дата) */}
+      <BookingMarkerForm
+        isOpen={isBookingFormOpen}
+        onClose={() => setIsBookingFormOpen(false)}
+        selectedMarker={clickedMarker}
+        onBookingCreated={async () => {
+          console.log("бронь создана, нужно обновить занятость");
+        }}
       />
     </div>
   );

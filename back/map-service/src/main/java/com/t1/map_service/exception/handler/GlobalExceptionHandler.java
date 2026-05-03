@@ -247,4 +247,19 @@ public class GlobalExceptionHandler {
                         .subErrors(Collections.emptyList())
                         .build());
     }
+
+    @ExceptionHandler(BookingConflictException.class)
+    public ResponseEntity<ErrorResponse> handleBookingConflict(
+            BookingConflictException ex,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.builder()
+                        .status(HttpStatus.CONFLICT.value())
+                        .message(ex.getMessage())
+                        .timestamp(LocalDateTime.now())
+                        .path(request.getRequestURI())
+                        .subErrors(Collections.emptyList())
+                        .build());
+    }
 }
